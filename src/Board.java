@@ -23,6 +23,11 @@ public class Board {
     player = 1;
   }
 
+  Board(Board board) {
+    this.board = copy2DArray(board.getBoard());
+    this.player = board.getPlayer();
+  }
+
   /**
    * @return The board size
    */
@@ -83,7 +88,7 @@ public class Board {
       for (int x = 0; x < board[y].length; x++) {
         Position pos = new Position(x, y);
 
-        if (containAPlayerPiece(pos) && getPieceAtPosition(pos) != player) {
+        if (containAPlayerPiece(pos) && getPieceAtPosition(pos) == player) {
           result = Utils.pushToArray(result, pos);
         }
       }
@@ -102,11 +107,23 @@ public class Board {
     return this;
   }
 
+  private static int[][] copy2DArray(int[][] arr) {
+    int[][] result = new int[arr.length][];
+    for (int i = 0; i < arr.length; i++) {
+      result[i] = new int[arr[i].length];
+      for (int j = 0; j < arr[i].length; j++) {
+        result[i][j] = arr[i][j];
+      }
+    }
+    return result;
+  }
+
   public boolean checkPositionStringFormat(String input) {
 //    If the input do not respect the pattern 99A, return false
     if (!input.matches("^\\d{1,2}[\\w]$")) return false;
     int row = Integer.parseInt(input.substring(0, input.length() - 1));
-    int column = input.charAt(input.length() - 1) - 'A';
+    char letterChar = input.charAt(input.length() - 1);
+    int column = letterChar <= 90 ? letterChar - 'A' : letterChar - 'A' - 6;
     return isPositionCorrect(new Position(row, column));
   }
 
@@ -185,15 +202,16 @@ public class Board {
 
   public boolean isThePlacementCorrect(Position pos, int player) {
     return isPositionCorrect(pos) && !containAPlayerPiece(pos) && (
-        north(pos, player).length > 0 ||
-            south(pos, player).length > 0 ||
-            east(pos, player).length > 0 ||
-            west(pos, player).length > 0 ||
-            northEast(pos, player).length > 0 ||
-            northWest(pos, player).length > 0 ||
-            southEast(pos, player).length > 0 ||
-            southWest(pos, player).length > 0
+        countPiecesWillFlip(pos, player) > 0
     );
+  }
+
+  public int countPiecesWillFlip(Position pos, int player) {
+    if (isPositionCorrect(pos) && !containAPlayerPiece(pos)) {
+      return north(pos, player).length + south(pos, player).length + east(pos, player).length + west(pos, player).length + northEast(pos, player).length + northWest(pos, player).length + southEast(pos, player).length + southWest(pos, player).length;
+    } else {
+      return 0;
+    }
   }
 
   public boolean isThePlacementCorrect(Position pos) {
@@ -385,6 +403,10 @@ public class Board {
   }
 
   public boolean placePiece(Position pos) {
+    return placePiece(pos, player);
+  }
+
+  public boolean placePiece(Position pos, int player) {
     if (isThePlacementCorrect(pos)) {
       setPieceAtPosition(pos, player);
       flipPieces(north(pos, player));
@@ -404,5 +426,9 @@ public class Board {
 
   public int getPlayer() {
     return player;
+  }
+
+  public int[][] getBoard() {
+    return board;
   }
 }

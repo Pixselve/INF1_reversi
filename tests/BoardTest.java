@@ -70,8 +70,4 @@ class BoardTest {
     assertEquals(2, new Board(4, true).flipPiece(new Position(2, 2)).getPieceAtPosition(new Position(2, 2)));
   }
 
-  @Test
-  void north() {
-
-  }
 }

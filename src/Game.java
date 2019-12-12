@@ -2,57 +2,103 @@ import java.util.Scanner;
 
 public class Game {
   Board board;
-  Scanner sc = new Scanner(System.in);
+  PlayerSettings[] settings;
 
-  Game() {
+  boolean rule;
 
+  Game(boolean rule, int boardSize, PlayerSettings[] settings) {
+    this.rule = rule;
+    this.board = new Board(boardSize, rule);
+    this.settings = settings;
   }
 
-  private void play() {
-    board = new Board(askBoardSize(), askRule());
+  public boolean play() {
     while (board.canBothPlayersPlay()) {
-      round();
-      System.out.println(board.canBothPlayersPlay());
-    }
-    System.out.println("END OF THE GAME");
+      try {
+        round();
+      } catch (Exception e) {
+        if (e.getMessage().equals("exit")) {
+          return false;
+        } else if (e.getMessage().equals("save")) {
+          return true;
+        }
+      }
 
+    }
+    endGame();
+    return false;
   }
 
 
-  private void round() {
-    displayInformation();
+  private void round() throws Exception {
+    int controllerID = settings[board.getPlayer() - 1].getControllerID();
     if (board.whereToPlay().length > 0) {
-      board.placePiece(getPlacementFromPlayer(board.getPlayer()));
+      displayInformation();
+      if (controllerID == 1) {
+//      Real player
+        board.placePiece(getPlacementFromPlayer(board.getPlayer()));
+      } else if (controllerID == 2) {
+//      AI 1
+        board.placePiece(ArtificialIntelligence.ia1(board, board.getPlayer()));
+      } else if (controllerID == 3) {
+//      AI 2
+        board.placePiece(ArtificialIntelligence.ia2(board, board.getPlayer()));
+      } else {
+//      AI 3
+        board.placePiece(ArtificialIntelligence.ia3(board, board.getPlayer()));
+
+      }
+
     } else {
       System.out.println("Vous ne pouvez pas jouer, passage au joueur suivant...");
     }
+
+
     board.switchPlayer();
+  }
+
+  private void endGame() {
+    Score score = board.getScore();
+    if (rule && Math.abs(score.getPlayer1() - score.getPlayer2()) < 5 || !rule && score.getPlayer2() == score.getPlayer1()) {
+      System.out.println("╔════════════════════════════╗\n" +
+          "║ Fin de la partie !         ║\n" +
+          "╠════════════════════════════╣\n" +
+          "║ Il n'y a pas de gagnant ;( ║\n" +
+          "╚════════════════════════════╝");
+    } else {
+      int winner = Math.max(score.getPlayer1(), score.getPlayer2()) == score.getPlayer1() ? 1 : 2;
+      System.out.println(
+          "╔══════════════════════════════════════════════════╗\n" +
+              "║ Fin de la partie !                               ║\n" +
+              "╠══════════════════════════════════════════════════╣\n" +
+              "║ Félicitations au joueur " + winner + " qui remporte la partie ║\n" +
+              "╚══════════════════════════════════════════════════╝"
+      );
+    }
 
   }
 
   private void displayInformation() {
-    for (int i = 0; i < 50; i++) {
-      System.out.println();
-    }
     displayScore();
     board.display();
   }
 
-  private int askBoardSize() {
+  public static int askBoardSize() {
     System.out.println(
         "╔═══════════════════════════════════════╗\n" +
             "║ Veuillez saisir une taille de plateau ║\n" +
             "╚═══════════════════════════════════════╝"
     );
+    Scanner sc = new Scanner(System.in);
     int boardSize = sc.nextInt();
-    while (boardSize < 4 || boardSize % 2 != 0) {
-      System.out.println("Veuillez saisir une taille paire et supérieure à 4...");
+    while (boardSize < 4 || boardSize % 2 != 0 || boardSize > 52) {
+      System.out.println("Veuillez saisir une taille paire et supérieure à 4 et inférieure à 52...");
       boardSize = sc.nextInt();
     }
     return boardSize;
   }
 
-  private boolean askRule() {
+  public static boolean askRule() {
     System.out.println(
         "╔════════════════════════════════╗\n" +
             "║ Comment souhaitez-vous jouer ? ║\n" +
@@ -65,13 +111,72 @@ public class Game {
     Scanner sc = new Scanner(System.in);
     int rule = sc.nextInt();
     while (rule < 1 || rule > 2) {
-      System.out.println("Veuillez saisir une taille paire et supérieure à 4...");
+      System.out.println("Veuillez saisir une option valide...");
       rule = sc.nextInt();
     }
     return rule != 1;
   }
 
-  public void menu() {
+  public static PlayerSettings[] askPlayersSettings() {
+    System.out.println(
+        "╔═══════════════════════════════════════════╗\n" +
+            "║ Configuration de la partie                ║\n" +
+            "╠═══════════════════════╦═══════════════════╣\n" +
+            "║ JOUEUR 1              ║ JOUEUR 2          ║\n" +
+            "╠════════╦══════════════╬════╦══════════════╣\n" +
+            "║ A1     ║ Humain       ║ B1 ║ Humain       ║\n" +
+            "╠════════╬══════════════╬════╬══════════════╣\n" +
+            "║ A2     ║ Ordinateur 1 ║ B2 ║ Ordinateur 1 ║\n" +
+            "╠════════╬══════════════╬════╬══════════════╣\n" +
+            "║ A3     ║ Ordinateur 2 ║ B3 ║ Ordinateur 2 ║\n" +
+            "╠════════╬══════════════╬════╬══════════════╣\n" +
+            "║ A4     ║ Ordinateur 3 ║ B4 ║ Ordinateur 3 ║\n" +
+            "╠════════╬══════════════╩════╩══════════════╣\n" +
+            "║ finish ║ Terminer                         ║\n" +
+            "╚════════╩══════════════════════════════════╝"
+    );
+    String command = "";
+
+    boolean completed = false;
+    PlayerSettings[] settings = new PlayerSettings[2];
+    Scanner sc = new Scanner(System.in);
+    while (true) {
+      try {
+        command = sc.nextLine();
+        if (command.equals("finish")) {
+          if (completed) {
+            return settings;
+          } else {
+            throw new Exception("Veuillez finir la configuration avant de terminer");
+          }
+        } else {
+          if (command.length() != 2) throw new Exception("Taille incorrecte");
+          if (!command.matches("^[A-Z]\\d$")) throw new Exception("Format incorrect");
+          if (command.charAt(0) == 'A' || command.charAt(0) == 'B') {
+            int commandID = Integer.parseInt(command.charAt(1) + "");
+            if (commandID > 0 && commandID <= 4) {
+              int playerID = command.charAt(0) - 'A' + 1;
+              settings[playerID - 1] = new PlayerSettings(playerID, commandID);
+              if (settings[0] != null && settings[1] != null) completed = true;
+              System.out.println("Le joueur " + (playerID) + " est prêt pour la partie !");
+            } else {
+              throw new Exception("Cet identifiant de commande n'éxiste pas");
+            }
+          } else {
+            throw new Exception("Cet identifiant de joueur n'éxiste pas");
+          }
+        }
+
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+      }
+
+    }
+
+
+  }
+
+  public static int menu() {
     System.out.println("" +
         "╔═════════════════════════════════════════╗\n" +
         "║ Bienvenue sur Reversi !                 ║\n" +
@@ -85,19 +190,13 @@ public class Game {
         "║ 3    ║ Quitter                          ║\n" +
         "╚══════╩══════════════════════════════════╝"
     );
+    Scanner sc = new Scanner(System.in);
     int menuSelection = sc.nextInt();
     while (menuSelection <= 0 || menuSelection > 3) {
       System.out.println("Veuillez saisir une option correcte...");
       menuSelection = sc.nextInt();
     }
-    switch (menuSelection) {
-      case 1:
-        play();
-        break;
-      case 2:
-        break;
-      default:
-    }
+    return menuSelection;
   }
 
   private void displayScore() {
@@ -110,7 +209,7 @@ public class Game {
 
   }
 
-  private Position getPlacementFromPlayer(int player) {
+  private Position getPlacementFromPlayer(int player) throws Exception {
     Position posWhereWantToPlay;
     while (true) {
       System.out.println("" +
@@ -125,11 +224,12 @@ public class Game {
           "╠══════════════╬═══════════════════════╣\n" +
           "║ NombreLetter ║ Jouer un coup         ║\n" +
           "╚══════════════╩═══════════════════════╝");
+      Scanner sc = new Scanner(System.in);
       String input = sc.nextLine();
       if (input.equals("save")) {
-
+        throw new Exception("save");
       } else if (input.equals("exit")) {
-        menu();
+        throw new Exception("exit");
       } else if (input.equals("help")) {
         board.display(board.whereToPlay());
       } else {
@@ -153,4 +253,6 @@ public class Game {
 
     }
   }
+
+
 }

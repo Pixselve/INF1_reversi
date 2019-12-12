@@ -24,4 +24,8 @@ public class Position {
   public boolean equals(Position pos) {
     return pos.getY() == getY() && pos.getX() == getX();
   }
+
+  public String toString() {
+    return "P(" + getX() + ", " + getY() + ")";
+  }
 }
