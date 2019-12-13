@@ -4,6 +4,12 @@ public class Board {
   private int[][] board;
   private int player;
 
+  /**
+   * Create a new board based on a size and a rule
+   *
+   * @param size The size of the desired board
+   * @param rule The desired rule
+   */
   Board(int size, boolean rule) {
     if (size <= 0 || size % 2 != 0)
       throw new Error("A size of " + size + " is not allowed. Please specify an even and greater than 0 size");
@@ -23,12 +29,21 @@ public class Board {
     player = 1;
   }
 
+  /**
+   * Create a copy of an existing board
+   *
+   * @param board The board from which we want to create the new one
+   */
   Board(Board board) {
+//    Copy the board
     this.board = copy2DArray(board.getBoard());
+//    Use the same current player as the old one
     this.player = board.getPlayer();
   }
 
   /**
+   * Get the board size
+   *
    * @return The board size
    */
   public int size() {
@@ -36,6 +51,8 @@ public class Board {
   }
 
   /**
+   * Check if a position is valid on the board
+   *
    * @param pos The position we want to check
    * @return A boolean that represent if the position is on the board
    */
@@ -44,6 +61,8 @@ public class Board {
   }
 
   /**
+   * Get the piece at a given position
+   *
    * @param pos The position where we want to get the piece
    * @return The piece value
    */
@@ -52,6 +71,8 @@ public class Board {
   }
 
   /**
+   * Set the piece at a given position
+   *
    * @param pos   The position where we want to set the piece
    * @param value The value of the piece
    */
@@ -62,6 +83,8 @@ public class Board {
   }
 
   /**
+   * Check if a player piece is present on the board at a given position
+   *
    * @param pos The position where we want to check
    * @return A boolean that represent if a players's (any) piece is at this position
    */
@@ -70,6 +93,8 @@ public class Board {
   }
 
   /**
+   * Check if a given player piece is present on the board at a given position
+   *
    * @param pos    The position where we want to check
    * @param player The player
    * @return A boolean that represent if a piece of the player passed in params is present at the position
@@ -79,6 +104,8 @@ public class Board {
   }
 
   /**
+   * Get all the positions where a given player have a piece
+   *
    * @param player The player we are interested in
    * @return All the player's pieces positions on, the board
    */
@@ -86,8 +113,8 @@ public class Board {
     Position[] result = {};
     for (int y = 0; y < board.length; y++) {
       for (int x = 0; x < board[y].length; x++) {
+//        Loop over all the positions on the board
         Position pos = new Position(x, y);
-
         if (containAPlayerPiece(pos) && getPieceAtPosition(pos) == player) {
           result = Utils.pushToArray(result, pos);
         }
@@ -97,6 +124,8 @@ public class Board {
   }
 
   /**
+   * Flip a piece on the board at a given position
+   *
    * @param pos The position where to flip the piece
    * @return Itself
    */
@@ -107,6 +136,12 @@ public class Board {
     return this;
   }
 
+  /**
+   * Make a copy of a 2D array
+   *
+   * @param arr The array we want to copy
+   * @return The clone of the given array
+   */
   private static int[][] copy2DArray(int[][] arr) {
     int[][] result = new int[arr.length][];
     for (int i = 0; i < arr.length; i++) {
@@ -118,6 +153,12 @@ public class Board {
     return result;
   }
 
+  /**
+   * Check if a input string represent a valid position on the board
+   *
+   * @param input The input string
+   * @return A boolean that represent if a given string input represent a valid position on the board
+   */
   public boolean checkPositionStringFormat(String input) {
 //    If the input do not respect the pattern 99A, return false
     if (!input.matches("^\\d{1,2}[\\w]$")) return false;
@@ -127,6 +168,12 @@ public class Board {
     return isPositionCorrect(new Position(row, column));
   }
 
+  /**
+   * Convert a string that represent a position on the board to a Position
+   *
+   * @param str The input string
+   * @return The position converted from the string
+   */
   public Position getPositionFromString(String str) {
     if (!checkPositionStringFormat(str)) throw new Error("Invalid Position");
     char letterChar = str.charAt(str.length() - 1);
@@ -136,6 +183,8 @@ public class Board {
   }
 
   /**
+   * Get the players score
+   *
    * @return The players score
    */
   public Score getScore() {
@@ -148,14 +197,21 @@ public class Board {
     return new Score(occurScoreTable[1], occurScoreTable[2]);
   }
 
+  /**
+   * Display the board without any highlighted positions
+   */
   public void display() {
     display(new Position[]{});
   }
 
+  /**
+   * Display the board with highlighted positions
+   *
+   * @param highlightedPositions The positions we want to be highlighted on the board
+   */
   public void display(Position[] highlightedPositions) {
 
     int max = String.valueOf(size()).length();
-
 //    Generate the letters line
     StringBuilder lettersLine = new StringBuilder("").append(" ".repeat(max)).append("|");
     for (int i = 0; i < size(); i++) {
@@ -196,16 +252,36 @@ public class Board {
     }
   }
 
+  /**
+   * Get the other player ID
+   *
+   * @param player The current player
+   * @return The other player ID
+   */
   public int otherPlayerID(int player) {
     return player == 1 ? 2 : 1;
   }
 
+  /**
+   * Check if a player can place a piece at a given position by applying the rules
+   *
+   * @param pos    The position we want to check
+   * @param player The player responsible to the move
+   * @return A boolean that represent if the piece placement is correct
+   */
   public boolean isThePlacementCorrect(Position pos, int player) {
     return isPositionCorrect(pos) && !containAPlayerPiece(pos) && (
         countPiecesWillFlip(pos, player) > 0
     );
   }
 
+  /**
+   * Count the number of the other player piece that will be flip by a move at a given position
+   *
+   * @param pos    The current position
+   * @param player The player responsible for the move
+   * @return The number of the other player piece that will be flip by the move
+   */
   public int countPiecesWillFlip(Position pos, int player) {
     if (isPositionCorrect(pos) && !containAPlayerPiece(pos)) {
       return north(pos, player).length + south(pos, player).length + east(pos, player).length + west(pos, player).length + northEast(pos, player).length + northWest(pos, player).length + southEast(pos, player).length + southWest(pos, player).length;
@@ -214,10 +290,23 @@ public class Board {
     }
   }
 
+  /**
+   * Check if the current player can place a piece at a given position by applying the rules
+   *
+   * @param pos The position we want to check
+   * @return A boolean that represent if the piece placement is correct
+   */
   public boolean isThePlacementCorrect(Position pos) {
     return isThePlacementCorrect(pos, player);
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction NORTH
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] north(Position pos, int player) {
     Position[] result = {};
 
@@ -236,6 +325,13 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction SOUTH
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] south(Position pos, int player) {
     Position[] result = {};
 
@@ -254,6 +350,13 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction EAST
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] east(Position pos, int player) {
     Position[] result = {};
 
@@ -272,6 +375,13 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction WEST
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] west(Position pos, int player) {
     Position[] result = {};
 
@@ -290,6 +400,13 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction NORTH EAST
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] northEast(Position pos, int player) {
     Position[] result = {};
 
@@ -308,6 +425,13 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction NORTH WEST
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] northWest(Position pos, int player) {
     Position[] result = {};
 
@@ -326,6 +450,13 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction SOUTH EAST
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] southEast(Position pos, int player) {
     Position[] result = {};
 
@@ -344,6 +475,13 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Count the pieces flipped by a move. Direction SOUTH WEST
+   *
+   * @param pos    The position where we want to check
+   * @param player The player responsible for the move
+   * @return The pieces flipped by the move
+   */
   public Position[] southWest(Position pos, int player) {
     Position[] result = {};
 
@@ -362,10 +500,21 @@ public class Board {
     return new Position[]{};
   }
 
+  /**
+   * Get the positions where the current player can play
+   *
+   * @return The positions where the player can play
+   */
   public Position[] whereToPlay() {
     return whereToPlay(player);
   }
 
+  /**
+   * Get the positions where a given player can play
+   *
+   * @param player The player ID
+   * @return The positions where the player can play
+   */
   public Position[] whereToPlay(int player) {
     Position[] enemyPositions = getPlayerPositions(otherPlayerID(player));
     Position[] availablePosition = {};
@@ -387,14 +536,25 @@ public class Board {
     return availablePosition;
   }
 
+  /**
+   * @return A boolean that represent if the both players can play
+   */
   public boolean canBothPlayersPlay() {
     return whereToPlay(1).length > 0 || whereToPlay(2).length > 0;
   }
 
+  /**
+   * Switch the current player
+   */
   public void switchPlayer() {
     player = otherPlayerID(player);
   }
 
+  /**
+   * Flip an array of positions
+   *
+   * @param positions The positions where we want to flip the pieces
+   */
   public void flipPieces(Position[] positions) {
     for (Position position :
         positions) {
@@ -402,10 +562,22 @@ public class Board {
     }
   }
 
+  /**
+   * Place a piece of the current player on the board
+   *
+   * @param pos The position where we want to put a piece
+   * @return A boolean that represent if the piece have been placed
+   */
   public boolean placePiece(Position pos) {
     return placePiece(pos, player);
   }
 
+  /**
+   * Place a piece of a given player on the board
+   *
+   * @param pos The position where we want to put a piece
+   * @return A boolean that represent if the piece have been placed
+   */
   public boolean placePiece(Position pos, int player) {
     if (isThePlacementCorrect(pos)) {
       setPieceAtPosition(pos, player);
@@ -424,10 +596,20 @@ public class Board {
     }
   }
 
+  /**
+   * Get the current player
+   *
+   * @return The current player
+   */
   public int getPlayer() {
     return player;
   }
 
+  /**
+   * Get the current board state
+   *
+   * @return The board state
+   */
   public int[][] getBoard() {
     return board;
   }

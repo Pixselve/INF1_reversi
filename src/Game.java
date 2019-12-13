@@ -12,6 +12,11 @@ public class Game {
     this.settings = settings;
   }
 
+  /**
+   * Play or resume the current game
+   *
+   * @return A boolean that represent if we have to save or not the game
+   */
   public boolean play() {
     while (board.canBothPlayersPlay()) {
       try {
@@ -30,6 +35,11 @@ public class Game {
   }
 
 
+  /**
+   * Play a round
+   *
+   * @throws Exception If we want to save or exit
+   */
   private void round() throws Exception {
     int controllerID = settings[board.getPlayer() - 1].getControllerID();
     if (board.whereToPlay().length > 0) {
@@ -57,6 +67,9 @@ public class Game {
     board.switchPlayer();
   }
 
+  /**
+   * Display the end of the game information
+   */
   private void endGame() {
     Score score = board.getScore();
     if (rule && Math.abs(score.getPlayer1() - score.getPlayer2()) < 5 || !rule && score.getPlayer2() == score.getPlayer1()) {
@@ -78,11 +91,19 @@ public class Game {
 
   }
 
+  /**
+   * Display the score and the current board
+   */
   private void displayInformation() {
     displayScore();
     board.display();
   }
 
+  /**
+   * Ask the player for a board size
+   *
+   * @return The board size
+   */
   public static int askBoardSize() {
     System.out.println(
         "╔═══════════════════════════════════════╗\n" +
