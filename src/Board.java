@@ -16,10 +16,10 @@ public class Board {
     board = new int[size][size];
     int middle = size / 2;
     if (rule) {
-      board[middle][middle] = 1;
-      board[middle][middle - 1] = 2;
-      board[middle - 1][middle] = 1;
-      board[middle - 1][middle - 1] = 2;
+      board[middle][middle] = 2;
+      board[middle][middle - 1] = 1;
+      board[middle - 1][middle] = 2;
+      board[middle - 1][middle - 1] = 1;
     } else {
       board[middle][middle] = 1;
       board[middle][middle - 1] = 2;

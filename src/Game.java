@@ -18,15 +18,19 @@ public class Game {
    * @return A boolean that represent if we have to save or not the game
    */
   public boolean play() {
-    while (board.canBothPlayersPlay()) {
-      try {
-        round();
-      } catch (Exception e) {
-        if (e.getMessage().equals("exit")) {
-          return false;
-        } else if (e.getMessage().equals("save")) {
-          return true;
-        }
+    System.out.println(rule);
+    System.out.println(settings[0].isHaveSwitched());
+    System.out.println(settings[1].isHaveSwitched());
+    while (rule ? board.canBothPlayersPlay() && !(settings[0].isHaveSwitched() && settings[1].isHaveSwitched()) : board.canBothPlayersPlay()) {
+      System.out.println(rule);
+      System.out.println(settings[0].isHaveSwitched());
+      System.out.println(settings[1].isHaveSwitched());
+      String roundResult = round();
+      if (roundResult.equals("SaveTheGame")) {
+        return true;
+      }
+      if (roundResult.equals("DoNotSave")) {
+        return false;
       }
 
     }
@@ -38,15 +42,30 @@ public class Game {
   /**
    * Play a round
    *
-   * @throws Exception If we want to save or exit
+   * @return A string that indicate if we have to save or not the game
    */
-  private void round() throws Exception {
+  private String round() {
     int controllerID = settings[board.getPlayer() - 1].getControllerID();
     if (board.whereToPlay().length > 0) {
       displayInformation();
       if (controllerID == 1) {
 //      Real player
-        board.placePiece(getPlacementFromPlayer(board.getPlayer()));
+        InputAndSelection menuSelection = inGameMenu(board.getPlayer());
+        if (menuSelection.getSelection() == 1) {
+//          Save the game
+          return "SaveTheGame";
+        } else if (menuSelection.getSelection() == 4) {
+//          Pass the round
+          settings[board.getPlayer() - 1].setHaveSwitched(true);
+        } else if (menuSelection.getSelection() == 5) {
+//          Play
+          settings[board.getPlayer() - 1].setHaveSwitched(false);
+          board.placePiece(board.getPositionFromString(menuSelection.getInput()));
+
+        } else {
+//          Exit
+          return "DoNotSave";
+        }
       } else if (controllerID == 2) {
 //      AI 1
         board.placePiece(ArtificialIntelligence.ia1(board, board.getPlayer()));
@@ -65,6 +84,7 @@ public class Game {
 
 
     board.switchPlayer();
+    return "";
   }
 
   /**
@@ -230,48 +250,84 @@ public class Game {
 
   }
 
-  private Position getPlacementFromPlayer(int player) throws Exception {
-    Position posWhereWantToPlay;
+
+  /**
+   * Display a in-game menu and ask the player to make a selection
+   *
+   * @param player The current player
+   * @return The selection ID and input in a class
+   */
+  private InputAndSelection inGameMenu(int player) {
     while (true) {
-      System.out.println("" +
-          "╔══════════════════════════════════════╗\n" +
-          "║ À vous de jouer JOUEUR " + player + " !           ║\n" +
-          "╠══════════════╦═══════════════════════╣\n" +
-          "║ save         ║ Enregistrer la partie ║\n" +
-          "╠══════════════╬═══════════════════════╣\n" +
-          "║ exit         ║ Quitter la partie     ║\n" +
-          "╠══════════════╬═══════════════════════╣\n" +
-          "║ help         ║ Savoir où jouer       ║\n" +
-          "╠══════════════╬═══════════════════════╣\n" +
-          "║ NombreLetter ║ Jouer un coup         ║\n" +
-          "╚══════════════╩═══════════════════════╝");
+      System.out.println(
+          "╔══════════════════════════════════════════╗\n" +
+              "║ A vous de jouer JOUEUR " + player + "                 ║\n" +
+              "╠══════════════════╦═══════════════════════╣\n" +
+              "║ {Nombre}{Lettre} ║ Jouer un coup         ║\n" +
+              "╠══════════════════╬═══════════════════════╣\n" +
+              "║ save             ║ Sauvegarder la partie ║\n" +
+              "╠══════════════════╬═══════════════════════╣\n" +
+              "║ help             ║ Obtenir de l'aide     ║\n" +
+              "╠══════════════════╬═══════════════════════╣\n" +
+              "║ pass             ║ Passer son tour       ║\n" +
+              "╠══════════════════╬═══════════════════════╣\n" +
+              "║ exit             ║ Quitter               ║\n" +
+              "╚══════════════════╩═══════════════════════╝"
+      );
       Scanner sc = new Scanner(System.in);
       String input = sc.nextLine();
-      if (input.equals("save")) {
-        throw new Exception("save");
-      } else if (input.equals("exit")) {
-        throw new Exception("exit");
-      } else if (input.equals("help")) {
-        board.display(board.whereToPlay());
-      } else {
-        if (board.checkPositionStringFormat(input)) {
-          posWhereWantToPlay = board.getPositionFromString(input);
+      switch (input) {
+        case "save":
+          return new InputAndSelection(1, input);
+        case "exit":
+          return new InputAndSelection(2, input);
+        case "help":
+          if (rule) {
+            help(0, board.getPlayer());
+          } else {
+            System.out.println("⚠ Vous ne pouvez pas passer votre tour...");
+          }
 
-          if (!board.containAPlayerPiece(posWhereWantToPlay)) {
-            if (board.isThePlacementCorrect(posWhereWantToPlay)) {
-              return posWhereWantToPlay;
+          break;
+        case "pass":
+          return new InputAndSelection(4, input);
+        default:
+          if (board.checkPositionStringFormat(input)) {
+            Position posWhereWantToPlay;
+            posWhereWantToPlay = board.getPositionFromString(input);
+
+            if (!board.containAPlayerPiece(posWhereWantToPlay)) {
+              if (board.isThePlacementCorrect(posWhereWantToPlay)) {
+                return new InputAndSelection(5, input);
+              } else {
+                System.out.println("⚠ Vous ne pouvez pas jouer ici. Utilisez l'aide pour voir où jouer");
+              }
             } else {
-              System.out.println("⚠ Vous ne pouvez pas jouer ici. Utilisez l'aide pour voir où jouer");
+              System.out.println("⚠ Veuillez choisir une case libre");
             }
           } else {
-            System.out.println("⚠ Veuillez choisir une case libre");
+            System.out.println("⚠ Veuillez respecter le format ChiffreLettre (0A)");
           }
-        } else {
-          System.out.println("⚠ Veuillez respecter le format ChiffreLettre (0A)");
-        }
+          break;
       }
+    }
+  }
 
-
+  /**
+   * Help the player by displaying where he can play
+   *
+   * @param version The version of the help (which AI will be used)
+   * @param player  The current player
+   */
+  private void help(int version, int player) {
+    if (version == 1) {
+      board.display(new Position[]{ArtificialIntelligence.ia1(board, player)});
+    } else if (version == 2) {
+      board.display(new Position[]{ArtificialIntelligence.ia2(board, player)});
+    } else if (version == 3) {
+      board.display(new Position[]{ArtificialIntelligence.ia3(board, player)});
+    } else {
+      board.display(board.whereToPlay(player));
     }
   }
 
